@@ -40,11 +40,15 @@ cp .env.example .env
 
 Download Piper ONNX voice models and place them in `./models/`:
 
+Download from Google Drive and place `.onnx` + `.onnx.json` files in `./models/`:
+
+📥 **[Download voice models (Google Drive)](https://drive.google.com/drive/folders/1wAT-dDHECTblEjBsjdj-dOFfqfvyWVGT?usp=sharing)**
+
+> Models from [NGHI-TTS](https://github.com/nghimestudio/nghitts)
+
 ```bash
-# Vietnamese voices (from NGHI-TTS)
-# See: https://github.com/nghimestudio/nghitts
 mkdir -p models
-# Place .onnx + .onnx.json files in models/
+# Place downloaded .onnx + .onnx.json files in models/
 ```
 
 ### 3. Run
