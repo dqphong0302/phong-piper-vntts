@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech API — Vietnamese & English TTS</title>
+    <meta name="description" content="Multi-language Speech API — TTS & ASR powered by Piper ONNX + Whisper">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --bg:#080c18;
+            --surface:rgba(15,25,50,0.7);
+            --surface-alt:rgba(20,35,65,0.5);
+            --border:rgba(59,130,246,0.12);
+            --border-hover:rgba(59,130,246,0.25);
+            --text:#e2e8f0;
+            --text-dim:#64748b;
+            --text-muted:#475569;
+            --accent:#3b82f6;
+            --accent-light:#60a5fa;
+            --accent-dark:#2563eb;
+            --accent-glow:rgba(59,130,246,0.1);
+            --accent-glow2:rgba(59,130,246,0.06);
+            --success:#10b981;
+            --error:#ef4444;
+            --radius:12px;
+        }
+        body{font-family:'Inter',-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+        body::before{content:'';position:fixed;inset:0;background:
+            radial-gradient(ellipse 80% 60% at 50% -20%,rgba(59,130,246,0.08),transparent),
+            radial-gradient(ellipse 60% 40% at 80% 100%,rgba(37,99,235,0.05),transparent);
+            pointer-events:none;z-index:0}
+
+        .app{max-width:640px;margin:0 auto;padding:48px 20px 80px;position:relative;z-index:1}
+
+        /* Header */
+        .header{text-align:center;margin-bottom:32px}
+        .header .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;
+            background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(37,99,235,0.08));
+            border:1px solid rgba(59,130,246,0.2);color:var(--accent-light);font-size:0.72rem;font-weight:600;
+            letter-spacing:0.5px;text-transform:uppercase;margin-bottom:16px}
+        .header h1{font-size:2rem;font-weight:800;letter-spacing:-0.03em;
+            background:linear-gradient(135deg,#fff 30%,var(--accent-light));
+            -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+        .header p{color:var(--text-dim);font-size:0.9rem;margin-top:6px}
+
+        /* Voice cards */
+        .voice-gallery{display:flex;flex-direction:column;gap:10px}
+        .voice-section-title{font-size:0.85rem;font-weight:700;color:var(--accent-light);margin:14px 0 6px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+        .voice-card{display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;background:var(--surface-alt);
+            border:1px solid var(--border);transition:all 0.2s;cursor:pointer}
+        .voice-card:hover{border-color:var(--border-hover);background:rgba(59,130,246,0.06)}
+        .voice-card.playing{border-color:var(--accent);box-shadow:0 0 12px rgba(59,130,246,0.15)}
+        .vc-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+            font-size:1.1rem;flex-shrink:0;background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(37,99,235,0.1));
+            border:1px solid rgba(59,130,246,0.2)}
+        .vc-avatar.female{background:linear-gradient(135deg,rgba(236,72,153,0.15),rgba(219,39,119,0.1));
+            border-color:rgba(236,72,153,0.2)}
+        .vc-info{flex:1;min-width:0}
+        .vc-name{font-size:0.85rem;font-weight:600;color:var(--text)}
+        .vc-meta{font-size:0.72rem;color:var(--text-dim);margin-top:2px}
+        .vc-id{font-size:0.65rem;color:var(--text-muted);font-family:monospace}
+        .vc-play{width:34px;height:34px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--accent),var(--accent-dark));
+            color:#fff;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
+            flex-shrink:0;transition:transform 0.15s}
+        .vc-play:hover{transform:scale(1.1)}
+        .vc-play.active{background:linear-gradient(135deg,#ef4444,#dc2626)}
+
+        /* Tabs */
+        .tabs{display:flex;gap:2px;background:var(--surface);border-radius:var(--radius);padding:4px;
+            border:1px solid var(--border);margin-bottom:24px}
+        .tab{flex:1;padding:10px 0;text-align:center;border-radius:calc(var(--radius) - 2px);
+            border:none;background:none;color:var(--text-dim);font-family:inherit;
+            font-size:0.82rem;font-weight:600;cursor:pointer;transition:all .2s}
+        .tab:hover{color:var(--text);background:rgba(59,130,246,0.06)}
+        .tab.active{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(59,130,246,0.3)}
+
+        /* Language sub-tabs */
+        .lang-tabs{display:flex;gap:4px;margin-bottom:16px}
+        .lang-tab{flex:1;padding:8px 0;text-align:center;border-radius:8px;
+            border:1px solid var(--border);background:none;color:var(--text-dim);
+            font-family:inherit;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all .2s}
+        .lang-tab:hover{border-color:var(--border-hover);color:var(--text)}
+        .lang-tab.active{background:rgba(59,130,246,0.12);border-color:var(--accent);color:var(--accent-light)}
+        .lang-panel{display:none}
+        .lang-panel.active{display:block}
+
+        /* Cards */
+        .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+            padding:24px;margin-bottom:16px;backdrop-filter:blur(12px)}
+        .card label{display:block;font-size:0.72rem;font-weight:600;text-transform:uppercase;
+            letter-spacing:0.8px;color:var(--text-dim);margin-bottom:10px}
+
+        /* Tab Content */
+        .tab-content{display:none}
+        .tab-content.active{display:block}
+
+        /* Forms */
+        textarea{width:100%;min-height:100px;padding:14px;border-radius:10px;border:1px solid var(--border);
+            background:rgba(0,0,0,0.25);color:var(--text);font-family:inherit;font-size:0.9rem;resize:vertical;
+            transition:border-color .2s;line-height:1.5}
+        textarea:focus{outline:none;border-color:var(--accent)}
+        select{width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--border);
+            background:rgba(0,0,0,0.25);color:var(--text);font-family:inherit;font-size:0.85rem;
+            appearance:none;-webkit-appearance:none;
+            background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b'%3e%3cpath d='M6 8L1 3h10z'/%3e%3c/svg%3e");
+            background-repeat:no-repeat;background-position:right 12px center;cursor:pointer}
+        select:focus{outline:none;border-color:var(--accent)}
+
+        .char-count{display:block;text-align:right;font-size:0.72rem;color:var(--text-muted);margin-top:6px}
+
+        .controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:16px}
+        .controls label{margin-bottom:6px}
+
+        .slider-wrap{display:flex;align-items:center;gap:8px}
+        .slider-wrap input[type=range]{flex:1;accent-color:var(--accent);height:4px}
+        .slider-wrap span{font-size:0.8rem;font-weight:600;color:var(--accent-light);min-width:36px;text-align:right}
+
+        /* Buttons */
+        .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;
+            border:none;border-radius:var(--radius);font-family:inherit;font-size:0.9rem;font-weight:600;
+            cursor:pointer;transition:all .2s;margin-top:16px}
+        .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#fff;
+            box-shadow:0 4px 12px rgba(59,130,246,0.25)}
+        .btn-primary:hover{box-shadow:0 6px 20px rgba(59,130,246,0.35);transform:translateY(-1px)}
+        .btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+        .btn-sm{padding:10px 16px;font-size:0.82rem;margin-top:0;border-radius:10px}
+
+        /* Spinner */
+        .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;
+            border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+        @keyframes spin{to{transform:rotate(360deg)}}
+
+        /* Result / Audio */
+        .result{margin-top:16px;display:none}
+        .result.visible{display:block}
+        .result audio{width:100%;margin-bottom:10px;border-radius:8px}
+
+        .error{margin-top:12px;padding:10px 14px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);
+            border-radius:10px;color:#fca5a5;font-size:0.82rem;display:none}
+        .error.visible{display:block}
+
+        /* Voice chips */
+        .voice-chips{display:flex;flex-wrap:wrap;gap:6px}
+        .voice-chip{padding:6px 12px;border-radius:20px;background:var(--surface-alt);border:1px solid var(--border);
+            color:var(--text-dim);font-size:0.78rem;cursor:pointer;transition:all .2s;user-select:none}
+        .voice-chip:hover{border-color:var(--accent);color:var(--text)}
+        .voice-chip.active{background:rgba(59,130,246,0.15);border-color:var(--accent);color:var(--accent-light)}
+        .voice-chip .gender{margin-right:4px}
+        .cat-label{width:100%;font-size:0.68rem;font-weight:700;color:var(--text-muted);margin:14px 0 4px;
+            text-transform:uppercase;letter-spacing:0.6px}
+
+        /* Docs */
+        .docs h3{display:flex;align-items:center;gap:8px;font-size:0.9rem;margin-bottom:6px;margin-top:20px}
+        .docs h3:first-child{margin-top:0}
+        .docs .method{padding:3px 8px;border-radius:4px;font-size:0.68rem;font-weight:700}
+        .method-post{background:rgba(16,185,129,0.12);color:#34d399}
+        .method-get{background:rgba(59,130,246,0.12);color:var(--accent-light)}
+        .docs p{color:var(--text-dim);font-size:0.82rem;margin-bottom:6px}
+        .docs code{background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px;font-size:0.8rem;color:#93c5fd}
+        .docs pre{background:rgba(0,0,0,0.3);border-radius:10px;padding:14px;margin:8px 0;
+            overflow-x:auto;font-size:0.78rem;line-height:1.5;color:#93c5fd;border:1px solid var(--border)}
+
+        /* ASR */
+        .asr-modes{display:flex;gap:6px;margin-bottom:16px}
+        .asr-mode{flex:1;padding:10px;text-align:center;border-radius:10px;border:1px solid var(--border);
+            background:rgba(0,0,0,0.2);color:var(--text-dim);font-size:0.82rem;font-weight:500;
+            cursor:pointer;transition:all .2s}
+        .asr-mode:hover{border-color:var(--border-hover);color:var(--text)}
+        .asr-mode.active{background:rgba(59,130,246,0.1);border-color:var(--accent);color:var(--accent-light)}
+        .asr-panel{display:none}
+        .asr-panel.active{display:block}
+
+        .mic-btn{width:72px;height:72px;border-radius:50%;border:2px solid var(--border);
+            background:rgba(0,0,0,0.3);color:var(--text);font-size:1.8rem;cursor:pointer;
+            transition:all .3s;display:flex;align-items:center;justify-content:center;margin:24px auto}
+        .mic-btn:hover{border-color:var(--accent);background:var(--accent-glow)}
+        .mic-btn.recording{border-color:var(--error);background:rgba(239,68,68,0.1);
+            animation:pulse-rec 1.5s infinite}
+        @keyframes pulse-rec{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.25)}50%{box-shadow:0 0 0 14px rgba(239,68,68,0)}}
+
+        .file-drop{border:2px dashed var(--border);border-radius:var(--radius);padding:32px;
+            text-align:center;color:var(--text-dim);cursor:pointer;transition:all .2s}
+        .file-drop:hover,.file-drop.dragover{border-color:var(--accent);background:var(--accent-glow)}
+        .file-drop input{display:none}
+
+        .transcript{background:rgba(0,0,0,0.3);border-radius:10px;padding:16px;margin-top:14px;
+            min-height:50px;font-size:0.9rem;line-height:1.6;white-space:pre-wrap;border:1px solid var(--border)}
+        .asr-info{text-align:center;color:var(--text-dim);font-size:0.78rem;margin-top:8px}
+
+        .btn-row{display:flex;gap:8px;margin-top:10px}
+        .btn-row .btn{flex:1;margin-top:0;padding:10px}
+        .btn-copy{background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.2)}
+        .btn-clear{background:rgba(100,116,139,0.15);color:var(--text-dim);border:1px solid rgba(100,116,139,0.2)}
+
+        /* Tables */
+        .tbl{width:100%;font-size:0.78rem;border-collapse:collapse}
+        .tbl th{padding:8px;text-align:left;color:var(--text-dim);border-bottom:1px solid var(--border);font-weight:600}
+        .tbl td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.03)}
+        .tbl td:first-child{font-family:'JetBrains Mono',monospace;color:#93c5fd}
+
+        /* Footer */
+        .footer{text-align:center;margin-top:40px;padding-top:20px;border-top:1px solid var(--border);
+            font-size:0.72rem;color:var(--text-muted);line-height:1.8}
+        .footer a{color:var(--accent-light);text-decoration:none}
+        .footer strong{color:var(--text-dim)}
+
+        @media(max-width:600px){
+            .controls{grid-template-columns:1fr}
+            .header h1{font-size:1.6rem}
+            .tabs{gap:1px;padding:3px}
+            .tab{font-size:0.75rem;padding:8px 0}
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="header">
+        <div class="badge">⚡ Piper ONNX + Whisper ASR</div>
+        <h1>Speech API</h1>
+        <p>TTS · ASR — Vietnamese & English</p>
+    </div>
+
+    <div class="tabs" id="tabBar">
+        <button class="tab active" data-tab="tts">🔊 TTS</button>
+        <button class="tab" data-tab="asr">🎙️ ASR</button>
+        <button class="tab" data-tab="api">📄 API</button>
+    </div>
+
+    <!-- TTS Tab -->
+    <div id="tab-tts" class="tab-content active">
+        <!-- Language Sub-tabs -->
+        <div class="lang-tabs">
+            <button class="lang-tab active" data-lang="vi" onclick="switchLang('vi')">🇻🇳 Tiếng Việt</button>
+            <button class="lang-tab" data-lang="en" onclick="switchLang('en')">🇺🇸 English</button>
+        </div>
+
+        <!-- Vietnamese Panel -->
+        <div id="lang-vi" class="lang-panel active">
+            <div class="card">
+                <label>Văn bản tiếng Việt</label>
+                <textarea id="text-vi" placeholder="Nhập văn bản tiếng Việt..." maxlength="5000">Xin chào! Đây là hệ thống chuyển văn bản thành giọng nói tiếng Việt.</textarea>
+                <span class="char-count"><span id="charCount-vi">0</span> / 5000</span>
+                <div class="controls">
+                    <div>
+                        <label>Giọng đọc</label>
+                        <select id="voice-vi"><option>Đang tải...</option></select>
+                    </div>
+                    <div>
+                        <label>Tốc độ</label>
+                        <div class="slider-wrap">
+                            <input type="range" id="speed-vi" min="0.5" max="2.0" step="0.1" value="1.0">
+                            <span id="speedVal-vi">1.0x</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label>Cao độ</label>
+                        <div class="slider-wrap">
+                            <input type="range" id="pitch-vi" min="0.5" max="2.0" step="0.1" value="1.0">
+                            <span id="pitchVal-vi">1.0x</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="synthesize('vi')">
+                    <span>🔊</span> Tạo giọng nói
+                </button>
+                <div class="error" id="error-vi"></div>
+                <div class="result" id="result-vi">
+                    <audio id="player-vi" controls></audio>
+                    <div class="btn-row">
+                        <button class="btn btn-sm btn-primary" onclick="downloadAudio('vi')" style="background:linear-gradient(135deg,#10b981,#059669)">📥 Tải WAV</button>
+                        <button class="btn btn-sm btn-copy" onclick="toggleHistory()">📜 Lịch sử</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card" style="margin-top:16px">
+                <label>🎙️ Giọng đọc Tiếng Việt</label>
+                <p style="color:var(--text-dim);font-size:0.82rem;margin-bottom:14px">Nhấn ▶ để nghe thử · Nhấn card để chọn giọng</p>
+                <audio id="samplePlayer-vi" style="display:none"></audio>
+                <div class="voice-gallery" id="voiceGallery-vi"></div>
+            </div>
+        </div>
+
+        <!-- English Panel -->
+        <div id="lang-en" class="lang-panel">
+            <div class="card">
+                <label>English Text</label>
+                <textarea id="text-en" placeholder="Enter English text for speech synthesis..." maxlength="5000">Hello! This is a text-to-speech system supporting English voices.</textarea>
+                <span class="char-count"><span id="charCount-en">0</span> / 5000</span>
+                <div class="controls">
+                    <div>
+                        <label>Voice</label>
+                        <select id="voice-en"><option>Loading...</option></select>
+                    </div>
+                    <div>
+                        <label>Speed</label>
+                        <div class="slider-wrap">
+                            <input type="range" id="speed-en" min="0.5" max="2.0" step="0.1" value="1.0">
+                            <span id="speedVal-en">1.0x</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label>Pitch</label>
+                        <div class="slider-wrap">
+                            <input type="range" id="pitch-en" min="0.5" max="2.0" step="0.1" value="1.0">
+                            <span id="pitchVal-en">1.0x</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="synthesize('en')">
+                    <span>🔊</span> Generate Speech
+                </button>
+                <div class="error" id="error-en"></div>
+                <div class="result" id="result-en">
+                    <audio id="player-en" controls></audio>
+                    <div class="btn-row">
+                        <button class="btn btn-sm btn-primary" onclick="downloadAudio('en')" style="background:linear-gradient(135deg,#10b981,#059669)">📥 Download WAV</button>
+                        <button class="btn btn-sm btn-copy" onclick="toggleHistory()">📜 History</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card" style="margin-top:16px">
+                <label>🎙️ English Voices</label>
+                <p style="color:var(--text-dim);font-size:0.82rem;margin-bottom:14px">Click ▶ to preview · Click card to select voice</p>
+                <audio id="samplePlayer-en" style="display:none"></audio>
+                <div class="voice-gallery" id="voiceGallery-en"></div>
+            </div>
+        </div>
+
+        <!-- TTS History Panel (shared) -->
+        <div id="historyPanel" style="display:none;margin-top:14px" class="card">
+            <label>📜 Lịch sử / History</label>
+            <div id="historyList" style="max-height:300px;overflow-y:auto"></div>
+            <button class="btn btn-sm btn-clear" onclick="clearHistory()" style="margin-top:8px">🗑️ Xóa / Clear</button>
+        </div>
+    </div>
+
+    <!-- ASR Tab -->
+    <div id="tab-asr" class="tab-content">
+        <div class="card">
+            <label>Nhận dạng giọng nói (Speech-to-Text)</label>
+            <div class="asr-modes">
+                <div class="asr-mode active" data-mode="mic">🎤 Microphone</div>
+                <div class="asr-mode" data-mode="upload">📂 Upload File</div>
+            </div>
+
+            <div style="margin-bottom:14px">
+                <label>Ngôn ngữ</label>
+                <select id="asrLang">
+                    <option value="vi" selected>🇻🇳 Tiếng Việt</option>
+                    <option value="en">🇬🇧 English</option>
+                </select>
+            </div>
+
+            <div id="asr-mic" class="asr-panel active">
+                <button class="mic-btn" id="micBtn" onclick="toggleMic()">🎤</button>
+                <div class="asr-info" id="micStatus">Nhấn nút để bắt đầu thu âm</div>
+            </div>
+
+            <div id="asr-upload" class="asr-panel">
+                <div class="file-drop" id="fileDrop" onclick="document.getElementById('audioFile').click()">
+                    <div style="font-size:2rem;margin-bottom:8px">📁</div>
+                    <div>Kéo thả file audio hoặc nhấn để chọn</div>
+                    <div style="font-size:0.72rem;margin-top:6px;color:var(--text-muted)">WAV, MP3, M4A, OGG — tối đa 50MB</div>
+                    <input type="file" id="audioFile" accept="audio/*" onchange="handleAudioFile(this)">
+                </div>
+            </div>
+
+            <div id="asrResult" style="display:none">
+                <label style="margin-top:14px;display:block">Kết quả</label>
+                <div class="transcript" id="transcriptText"></div>
+                <div class="asr-info" id="asrDuration"></div>
+                <div class="btn-row">
+                    <button class="btn btn-copy" onclick="copyTranscript()">📋 Copy</button>
+                    <button class="btn btn-copy" onclick="downloadSRT()" id="srtBtn" style="display:none;background:linear-gradient(135deg,#10b981,#059669)">📝 Tải SRT</button>
+                    <button class="btn btn-clear" onclick="clearTranscript()">🗑️ Xóa</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Tab -->
+    <div id="tab-api" class="tab-content">
+        <div class="card docs">
+            <label>API Endpoints</label>
+
+            <h3><span class="method method-post">POST</span> /tts</h3>
+            <p>Text-to-Speech (hỗ trợ Vietnamese text preprocessing)</p>
+            <pre>curl -X POST https://vitts.phongdang.io.vn/tts \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Xin chào","voice":"banmai","speed":1.0,"pitch":1.0}' \
+  -o speech.wav</pre>
+
+            <h3><span class="method method-post">POST</span> /asr</h3>
+            <p>Speech-to-Text (Whisper small, hỗ trợ 6 ngôn ngữ)</p>
+            <pre>curl -X POST https://vitts.phongdang.io.vn/asr \
+  -F "file=@audio.wav" \
+  -F "language=vi"</pre>
+
+            <h3><span class="method method-post">POST</span> /v1/audio/speech</h3>
+            <p>OpenAI TTS compatible</p>
+            <pre>curl -X POST https://vitts.phongdang.io.vn/v1/audio/speech \
+  -H "Content-Type: application/json" \
+  -d '{"input":"Xin chào","voice":"banmai","response_format":"mp3"}' \
+  -o speech.mp3</pre>
+
+            <h3><span class="method method-post">POST</span> /v1/audio/transcriptions</h3>
+            <p>OpenAI Whisper compatible</p>
+            <pre>curl -X POST https://vitts.phongdang.io.vn/v1/audio/transcriptions \
+  -F "file=@audio.wav" -F "language=vi"</pre>
+
+            <h3><span class="method method-post">POST</span> /asr/srt</h3>
+            <p>Xuất phụ đề SRT với timestamps</p>
+            <pre>curl -X POST https://vitts.phongdang.io.vn/asr/srt \
+  -F "file=@audio.wav" -F "language=vi" -o transcript.srt</pre>
+
+            <h3><span class="method method-post">POST</span> /tts/long</h3>
+            <p>TTS cho văn bản dài (tự động chia chunk)</p>
+            <pre>curl -X POST https://vitts.phongdang.io.vn/tts/long \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Đoạn văn rất dài...","voice":"banmai"}' \
+  -o speech.wav</pre>
+
+            <h3><span class="method method-get">GET</span> /voices · /health · /asr/info</h3>
+            <p>Danh sách giọng · Trạng thái hệ thống · Thông tin ASR engine</p>
+
+            <h3 style="margin-top:28px">⚙️ TTS Parameters</h3>
+            <table class="tbl">
+                <thead><tr><th>Param</th><th>Range</th><th>Mô tả</th></tr></thead>
+                <tbody>
+                    <tr><td>text</td><td>1–5000</td><td>Văn bản cần đọc</td></tr>
+                    <tr><td>voice</td><td>—</td><td>Voice ID</td></tr>
+                    <tr><td>speed</td><td>0.5–2.0</td><td>Tốc độ đọc</td></tr>
+                    <tr><td>pitch</td><td>0.5–2.0</td><td>Cao độ giọng</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div><script>
+    let audioBlobs = {vi: null, en: null};
+    let currentLang = 'vi';
+    let currentSampleVoice = null;
+
+    const VOICES_META = {
+        lacphi:{g:'♀',n:'Lạc Phi',s:'Chững chạc, đĩnh đạc',cat:'vi-nữ',lang:'vi'},
+        maiphuong:{g:'♀',n:'Mai Phương',s:'Trong trẻo, tươi sáng',cat:'vi-nữ',lang:'vi'},
+        mytam2:{g:'♀',n:'Mỹ Tâm',s:'Ca sĩ',cat:'vi-nữ',lang:'vi'},
+        ngochuyen:{g:'♀',n:'Ngọc Huyền',s:'Truyền cảm',cat:'vi-nữ',lang:'vi'},
+        thanhphuong2:{g:'♀',n:'Thanh Phương',s:'Nhẹ nhàng',cat:'vi-nữ',lang:'vi'},
+        manhdung:{g:'♂',n:'Mạnh Dũng',s:'Rõ ràng, mạch lạc',cat:'vi-nam',lang:'vi'},
+        minhkhang:{g:'♂',n:'Minh Khang',s:'Mạnh mẽ, tự tin',cat:'vi-nam',lang:'vi'},
+        minhquang:{g:'♂',n:'Minh Quang',s:'Tự tin, chuyên nghiệp',cat:'vi-nam',lang:'vi'},
+        tranthanh3870:{g:'♂',n:'Trấn Thành',s:'Nghệ sĩ, hài hước',cat:'vi-nam',lang:'vi'},
+        vietthao3886:{g:'♂',n:'Việt Thảo',s:'MC, truyền hình',cat:'vi-nam',lang:'vi'},
+        john:{g:'♂',n:'John',s:'Clear, professional',cat:'en-male',lang:'en'},
+        mattheo:{g:'♂',n:'Mattheo',s:'Natural, expressive',cat:'en-male',lang:'en'},
+        mattheo1:{g:'♂',n:'Mattheo v2',s:'Warm, conversational',cat:'en-male',lang:'en'},
+    };
+    const CAT_LABELS_VI = {'vi-nữ':'🇻🇳 Giọng Nữ','vi-nam':'🇻🇳 Giọng Nam'};
+    const CAT_LABELS_EN = {'en-male':'🇺🇸 Male Voices'};
+
+    // ── Init ──
+    document.addEventListener('DOMContentLoaded', () => {
+        loadVoices();
+        ['vi','en'].forEach(lang => {
+            const ta = document.getElementById('text-'+lang);
+            if(ta) ta.addEventListener('input', () => updateCount(lang));
+            const sp = document.getElementById('speed-'+lang);
+            if(sp) sp.addEventListener('input', e => document.getElementById('speedVal-'+lang).textContent = e.target.value+'x');
+            const pi = document.getElementById('pitch-'+lang);
+            if(pi) pi.addEventListener('input', e => document.getElementById('pitchVal-'+lang).textContent = e.target.value+'x');
+            updateCount(lang);
+        });
+
+        document.querySelectorAll('.tab[data-tab]').forEach(btn => {
+            btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        });
+        document.querySelectorAll('.asr-mode[data-mode]').forEach(btn => {
+            btn.addEventListener('click', () => switchAsrMode(btn.dataset.mode));
+        });
+
+        const drop = document.getElementById('fileDrop');
+        if (drop) {
+            drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('dragover'); });
+            drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+            drop.addEventListener('drop', e => {
+                e.preventDefault(); drop.classList.remove('dragover');
+                if (e.dataTransfer.files.length) transcribeFile(e.dataTransfer.files[0]);
+            });
+        }
+    });
+
+    function updateCount(lang) {
+        const ta = document.getElementById('text-'+lang);
+        const cc = document.getElementById('charCount-'+lang);
+        if(ta && cc) cc.textContent = ta.value.length;
+    }
+
+    // ── Language Switching ──
+    function switchLang(lang) {
+        currentLang = lang;
+        document.querySelectorAll('.lang-tab').forEach(t => t.classList.toggle('active', t.dataset.lang === lang));
+        document.querySelectorAll('.lang-panel').forEach(p => p.classList.remove('active'));
+        const panel = document.getElementById('lang-' + lang);
+        if (panel) panel.classList.add('active');
+    }
+
+    // ── Tab Navigation ──
+    function switchTab(name) {
+        document.querySelectorAll('.tab[data-tab]').forEach(t => {
+            t.classList.toggle('active', t.dataset.tab === name);
+        });
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        const panel = document.getElementById('tab-' + name);
+        if (panel) panel.classList.add('active');
+    }
+
+    function switchAsrMode(mode) {
+        document.querySelectorAll('.asr-mode').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+        document.querySelectorAll('.asr-panel').forEach(p => p.classList.remove('active'));
+        const panel = document.getElementById('asr-' + mode);
+        if (panel) panel.classList.add('active');
+    }
+
+    // ── Voice Loading ──
+    async function loadVoices() {
+        try {
+            const res = await fetch('/voices');
+            const voices = await res.json();
+            const viVoices = voices.filter(v => (v.language||'vi') !== 'en');
+            const enVoices = voices.filter(v => (v.language||'vi') === 'en');
+
+            buildVoiceUI(viVoices, 'vi', CAT_LABELS_VI);
+            buildVoiceUI(enVoices, 'en', CAT_LABELS_EN);
+        } catch(e) {
+            document.getElementById('voice-vi').innerHTML = '<option value="lacphi">Lạc Phi</option>';
+            document.getElementById('voice-en').innerHTML = '<option value="john">John</option>';
+        }
+    }
+
+    function buildVoiceUI(voices, lang, catLabels) {
+        const sel = document.getElementById('voice-'+lang);
+        const gallery = document.getElementById('voiceGallery-'+lang);
+        if (!sel || !gallery) return;
+
+        const groups = {};
+        voices.forEach(v => {
+            const meta = VOICES_META[v.id] || {g:'?',n:v.name,s:v.name,cat:lang==='en'?'en-male':'vi-nữ',lang};
+            const cat = meta.cat;
+            if (!groups[cat]) groups[cat] = [];
+            groups[cat].push({...v, meta});
+        });
+
+        sel.innerHTML = Object.entries(catLabels).map(([cat, label]) => {
+            if (!groups[cat]) return '';
+            return groups[cat].map(v =>
+                `<option value="${v.id}">${v.meta.g} ${v.meta.n} · ${v.meta.s}</option>`
+            ).join('');
+        }).join('');
+
+        gallery.innerHTML = Object.entries(catLabels).map(([cat, label]) => {
+            if (!groups[cat]) return '';
+            const cards = groups[cat].map(v => `
+                <div class="voice-card" id="vc-${v.id}" onclick="selectVoiceCard('${v.id}','${lang}')">
+                    <div class="vc-avatar ${v.meta.g==='♀'?'female':''}">${v.meta.g==='♀'?'👩':'👨'}</div>
+                    <div class="vc-info">
+                        <div class="vc-name">${v.meta.n}</div>
+                        <div class="vc-meta">${v.meta.s}</div>
+                        <div class="vc-id">${v.id}</div>
+                    </div>
+                    <button class="vc-play" id="play-${v.id}" onclick="event.stopPropagation();playSample('${v.id}','${lang}')" title="${lang==='vi'?'Nghe thử':'Preview'}">▶</button>
+                </div>
+            `).join('');
+            return `<div class="voice-section-title">${label} (${groups[cat].length})</div>${cards}`;
+        }).join('');
+    }
+
+    function selectVoiceCard(id, lang) {
+        document.querySelectorAll('.voice-card').forEach(c => c.style.borderColor = '');
+        const card = document.getElementById('vc-' + id);
+        if (card) card.style.borderColor = 'var(--accent)';
+        const sel = document.getElementById('voice-' + lang);
+        if (sel) sel.value = id;
+    }
+
+    function playSample(id, lang) {
+        const player = document.getElementById('samplePlayer-' + lang);
+        const btn = document.getElementById('play-' + id);
+        if (!player || !btn) return;
+
+        if (currentSampleVoice === id && !player.paused) {
+            player.pause();
+            btn.classList.remove('active'); btn.textContent = '▶';
+            document.getElementById('vc-' + id)?.classList.remove('playing');
+            currentSampleVoice = null;
+            return;
+        }
+
+        document.querySelectorAll('.vc-play').forEach(b => { b.classList.remove('active'); b.textContent = '▶'; });
+        document.querySelectorAll('.voice-card').forEach(c => c.classList.remove('playing'));
+
+        player.src = '/static/samples/' + id + '.wav';
+        player.play().catch(() => {
+            // If no sample, generate one
+            fetch('/tts', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({text: lang==='vi' ? 'Xin chào, tôi là giọng đọc tiếng Việt.' : 'Hello, this is a demo of my voice.', voice: id})
+            }).then(r => r.blob()).then(b => { player.src = URL.createObjectURL(b); player.play(); });
+        });
+        btn.classList.add('active'); btn.textContent = '⏸';
+        document.getElementById('vc-' + id)?.classList.add('playing');
+        currentSampleVoice = id;
+        selectVoiceCard(id, lang);
+
+        player.onended = () => {
+            btn.classList.remove('active'); btn.textContent = '▶';
+            document.getElementById('vc-' + id)?.classList.remove('playing');
+            currentSampleVoice = null;
+        };
+    }
+
+    // ── TTS ──
+    async function synthesize(lang) {
+        const text = document.getElementById('text-' + lang).value.trim();
+        if (!text) { showErr(lang==='vi' ? 'Vui lòng nhập văn bản' : 'Please enter text', lang); return; }
+        const btn = event.target.closest('.btn-primary');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> ' + (lang==='vi' ? 'Đang xử lý...' : 'Processing...');
+        hideErr(lang);
+        document.getElementById('result-' + lang).classList.remove('visible');
+
+        try {
+            const res = await fetch('/tts', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    text,
+                    voice: document.getElementById('voice-' + lang).value,
+                    speed: parseFloat(document.getElementById('speed-' + lang).value),
+                    pitch: parseFloat(document.getElementById('pitch-' + lang).value)
+                })
+            });
+            if (!res.ok) { const e = await res.json(); throw new Error(e.detail); }
+            audioBlobs[lang] = await res.blob();
+            const player = document.getElementById('player-' + lang);
+            player.src = URL.createObjectURL(audioBlobs[lang]);
+            document.getElementById('result-' + lang).classList.add('visible');
+            player.play();
+
+            addToHistory(text, document.getElementById('voice-' + lang).value, player.src);
+        } catch(e) { showErr(e.message, lang); }
+        finally {
+            btn.disabled = false;
+            btn.innerHTML = '<span>🔊</span> ' + (lang==='vi' ? 'Tạo giọng nói' : 'Generate Speech');
+        }
+    }
+
+    function downloadAudio(lang) {
+        if (!audioBlobs[lang]) return;
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(audioBlobs[lang]);
+        a.download = 'speech.wav'; a.click();
+    }
+
+    function showErr(msg, lang) {
+        const e = document.getElementById('error-' + lang);
+        if (e) { e.textContent = '❌ ' + msg; e.classList.add('visible'); }
+    }
+    function hideErr(lang) {
+        const e = document.getElementById('error-' + lang);
+        if (e) e.classList.remove('visible');
+    }
+
+    // ── ASR ──
+    let mediaRecorder = null, audioChunks = [], isRecording = false;
+
+    async function toggleMic() {
+        const btn = document.getElementById('micBtn');
+        const status = document.getElementById('micStatus');
+        if (isRecording) {
+            mediaRecorder.stop(); btn.classList.remove('recording');
+            btn.innerHTML = '🎤'; status.textContent = '⏳ Đang nhận dạng...';
+            isRecording = false; return;
+        }
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+            mediaRecorder.onstop = async () => {
+                stream.getTracks().forEach(t => t.stop());
+                await transcribeBlob(new Blob(audioChunks, {type:'audio/webm'}), 'recording.webm');
+            };
+            mediaRecorder.start(); isRecording = true;
+            btn.classList.add('recording'); btn.innerHTML = '⏹';
+            status.textContent = '🔴 Đang thu âm... nhấn để dừng';
+        } catch(e) { status.textContent = '❌ Không thể truy cập mic: ' + e.message; }
+    }
+
+    function handleAudioFile(input) { if (input.files.length) transcribeFile(input.files[0]); }
+
+    async function transcribeFile(file) {
+        if (file.size > 50*1024*1024) { showAsrResult('❌ File quá lớn (max 50MB)',''); return; }
+        await transcribeBlob(new Blob([await file.arrayBuffer()], {type:file.type}), file.name);
+    }
+
+    async function transcribeBlob(blob, filename) {
+        document.getElementById('micStatus').textContent = '⏳ Đang nhận dạng...';
+        const fd = new FormData();
+        fd.append('file', blob, filename);
+        fd.append('language', document.getElementById('asrLang').value);
+        try {
+            const res = await fetch('/asr', {method:'POST', body:fd});
+            if (!res.ok) { const e = await res.json(); throw new Error(e.detail); }
+            const d = await res.json();
+            showAsrResult(d.text, `⏱ ${d.duration}s · Model: ${d.model}`);
+            document.getElementById('micStatus').textContent = 'Nhấn nút để thu âm lại';
+        } catch(e) {
+            showAsrResult('❌ ' + e.message, '');
+            document.getElementById('micStatus').textContent = 'Thử lại';
+        }
+    }
+
+    function showAsrResult(text, info) {
+        document.getElementById('transcriptText').textContent = text || '(không nhận dạng được)';
+        document.getElementById('asrDuration').textContent = info;
+        document.getElementById('asrResult').style.display = 'block';
+    }
+
+    function copyTranscript() { navigator.clipboard.writeText(document.getElementById('transcriptText').textContent); }
+    function clearTranscript() { document.getElementById('asrResult').style.display = 'none'; document.getElementById('srtBtn').style.display = 'none'; lastAsrFile = null; }
+
+    // ── SRT Download ──
+    let lastAsrFile = null;
+    async function downloadSRT() {
+        if (!lastAsrFile) return;
+        const fd = new FormData();
+        fd.append('file', lastAsrFile, lastAsrFile.name || 'audio.webm');
+        fd.append('language', document.getElementById('asrLang').value);
+        try {
+            const res = await fetch('/asr/srt', {method:'POST', body:fd});
+            if (!res.ok) throw new Error('SRT export failed');
+            const srt = await res.text();
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([srt], {type:'text/srt'}));
+            a.download = 'transcript.srt'; a.click();
+        } catch(e) { alert('Lỗi: ' + e.message); }
+    }
+
+    // Override transcribeBlob to save file ref + show SRT button
+    const _origTranscribeBlob = transcribeBlob;
+    transcribeBlob = async function(blob, filename) {
+        lastAsrFile = new File([blob], filename, {type: blob.type});
+        await _origTranscribeBlob(blob, filename);
+        document.getElementById('srtBtn').style.display = 'inline-flex';
+    };
+
+    // ── TTS History ──
+    const HIST_KEY = 'tts_history';
+    const MAX_HIST = 20;
+
+    function getHistory() {
+        try { return JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); } catch { return []; }
+    }
+
+    function addToHistory(text, voice, audioUrl) {
+        const hist = getHistory();
+        hist.unshift({ text: text.substring(0, 100), voice, time: new Date().toLocaleTimeString('vi'), audioUrl });
+        if (hist.length > MAX_HIST) hist.pop();
+        localStorage.setItem(HIST_KEY, JSON.stringify(hist));
+    }
+
+    function renderHistory() {
+        const hist = getHistory();
+        const el = document.getElementById('historyList');
+        if (!hist.length) { el.innerHTML = '<div style="color:var(--text-dim);font-size:0.82rem;padding:8px">Chưa có lịch sử</div>'; return; }
+        el.innerHTML = hist.map((h, i) => `
+            <div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:0.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h.text}</div>
+                    <div style="font-size:0.72rem;color:var(--text-muted)">${h.voice} · ${h.time}</div>
+                </div>
+                ${h.audioUrl ? '<button class="btn btn-sm btn-copy" onclick="playHistItem('+i+')" style="margin-left:8px;font-size:0.72rem">▶</button>' : ''}
+            </div>
+        `).join('');
+    }
+
+    function toggleHistory() {
+        const p = document.getElementById('historyPanel');
+        p.style.display = p.style.display === 'none' ? 'block' : 'none';
+        if (p.style.display === 'block') renderHistory();
+    }
+
+    function clearHistory() {
+        localStorage.removeItem(HIST_KEY);
+        renderHistory();
+    }
+
+    function playHistItem(idx) {
+        const hist = getHistory();
+        if (hist[idx] && hist[idx].audioUrl) {
+            const player = document.getElementById('player-' + currentLang);
+            player.src = hist[idx].audioUrl;
+            player.play();
+            document.getElementById('result-' + currentLang).classList.add('visible');
+        }
+    }
+</script>
+
+    <div class="footer">
+        Speech API · Piper ONNX + Whisper ASR<br>
+        Models from <a href="https://github.com/nghimestudio/nghitts" target="_blank">NGHI-TTS</a> · Host bởi Home Server của <strong>Phong Đặng</strong><br>
+        <a href="/docs">Swagger UI</a> · <a href="/health">Health</a>
+    </div>
+</div>
+</body>
+</html>

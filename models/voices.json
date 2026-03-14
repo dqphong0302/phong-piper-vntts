@@ -1,0 +1,353 @@
+{
+  "john": {
+    "name": "john",
+    "language": {
+      "code": "en_US",
+      "family": "en",
+      "region": "US",
+      "name_native": "English",
+      "name_english": "English"
+    },
+    "quality": "medium",
+    "num_speakers": 1,
+    "speaker_id_map": {},
+    "files": {
+      "john.onnx": {
+        "size_bytes": 63516050,
+        "md5_digest": ""
+      },
+      "john.onnx.json": {
+        "size_bytes": 4855,
+        "md5_digest": ""
+      }
+    },
+    "aliases": [],
+    "audio": {
+      "sample_rate": 22050
+    }
+  },
+  "lacphi": {
+    "name": "lacphi",
+    "language": {
+      "code": "vi_VN",
+      "family": "vi",
+      "region": "VN",
+      "name_native": "Vietnamese",
+      "name_english": "Vietnamese"
+    },
+    "quality": "medium",
+    "num_speakers": 1,
+    "speaker_id_map": {},
+    "files": {
+      "lacphi.onnx": {
+        "size_bytes": 63516050,
+        "md5_digest": ""
+      },
+      "lacphi.onnx.json": {
+        "size_bytes": 4855,
+        "md5_digest": ""
+      }
+    },
+    "aliases": [],
+    "audio": {
+      "sample_rate": 22050
+    }
+  },
+  "maiphuong": {
+    "name": "maiphuong",
+    "language": {
+      "code": "vi_VN",
+      "family": "vi",
+      "region": "VN",
+      "name_native": "Vietnamese",
+      "name_english": "Vietnamese"
+    },
+    "quality": "medium",
+    "num_speakers": 1,
+    "speaker_id_map": {},
+    "files": {
+      "maiphuong.onnx": {
+        "size_bytes": 63516050,
+        "md5_digest": ""
+      },
+      "maiphuong.onnx.json": {
+        "size_bytes": 4855,
+        "md5_digest": ""
+      }
+    },
+    "aliases": [],
+    "audio": {
+      "sample_rate": 22050
+    }
+  },
+  "manhdung": {
+    "name": "manhdung",
+    "language": {
+      "code": "vi_VN",
+      "family": "vi",
+      "region": "VN",
+      "name_native": "Vietnamese",
+      "name_english": "Vietnamese"
+    },
+    "quality": "medium",
+    "num_speakers": 1,
+    "speaker_id_map": {},
+    "files": {
+      "manhdung.onnx": {
+        "size_bytes": 63516050,
+        "md5_digest": ""
+      },
+      "manhdung.onnx.json": {
+        "size_bytes": 4855,
+        "md5_digest": ""
+      }
+    },
+    "aliases": [],
+    "audio": {
+      "sample_rate": 22050
+    }
+  },
+  "mattheo": {
+    "name": "mattheo",
+    "language": {
+      "code": "en_US",
+      "family": "en",
+      "region": "US",
+      "name_native": "English",
+      "name_english": "English"
+    },
+    "quality": "medium",
+    "num_speakers": 1,
+    "speaker_id_map": {},
+    "files": {
+      "mattheo.onnx": {
+        "size_bytes": 63516050,
+        "md5_digest": ""
+      },
+      "mattheo.onnx.json": {
+        "size_bytes": 4855,
+        "md5_digest": ""
+      }
+    },
+    "aliases": [],
+    "audio": {
+      "sample_rate": 22050
+    }
+  },
+  "mattheo1": {
+    "name": "mattheo1",
+    "language": {
+      "code": "en_US",
+      "family": "en",
+      "region": "US",
+      "name_native": "English",
+      "name_english": "English"
+    },
+    "quality": "medium",
+    "num_speakers": 1,
+    "speaker_id_map": {},
+    "files": {
+      "mattheo1.onnx": {
+        "size_bytes": 63516050,
+        "md5_digest": ""
+      },
+      "mattheo1.onnx.json": {
+        "size_bytes": 4855,
+        "md5_digest": ""
+      }
+    },
+    "aliases": [],
+    "audio": {
+      "sample_rate": 22050
+    }
+  },
+  "minhkhang": {
+    "name": "minhkhang",
+    "language": {
+      "code": "vi_VN",
+      "family": "vi",
+      "region": "VN",
+      "name_native": "Vietnamese",
+      "name_english": "Vietnamese"
+    },
+    "quality": "medium",
+    "num_speakers": 1,
+    "speaker_id_map": {},
+    "files": {
+      "minhkhang.onnx": {
+        "size_bytes": 63516050,
+        "md5_digest": ""
+      },
+      "minhkhang.onnx.json": {
+        "size_bytes": 4855,
+        "md5_digest": ""
+      }
+    },
+    "aliases": [],
+    "audio": {
+      "sample_rate": 22050
+    }
+  },
+  "minhquang": {
+    "name": "minhquang",
+    "language": {
+      "code": "vi_VN",
+      "family": "vi",
+      "region": "VN",
+      "name_native": "Vietnamese",
+      "name_english": "Vietnamese"
+    },
+    "quality": "medium",
+    "num_speakers": 1,
+    "speaker_id_map": {},
+    "files": {
+      "minhquang.onnx": {
+        "size_bytes": 63516050,
+        "md5_digest": ""
+      },
+      "minhquang.onnx.json": {
+        "size_bytes": 4855,
+        "md5_digest": ""
+      }
+    },
+    "aliases": [],
+    "audio": {
+      "sample_rate": 22050
+    }
+  },
+  "mytam2": {
+    "name": "mytam2",
+    "language": {
+      "code": "vi_VN",
+      "family": "vi",
+      "region": "VN",
+      "name_native": "Vietnamese (South)",
+      "name_english": "Vietnamese (South)"
+    },
+    "quality": "medium",
+    "num_speakers": 1,
+    "speaker_id_map": {},
+    "files": {
+      "mytam2.onnx": {
+        "size_bytes": 63516050,
+        "md5_digest": ""
+      },
+      "mytam2.onnx.json": {
+        "size_bytes": 4866,
+        "md5_digest": ""
+      }
+    },
+    "aliases": [],
+    "audio": {
+      "sample_rate": 22050
+    }
+  },
+  "ngochuyen": {
+    "name": "ngochuyen",
+    "language": {
+      "code": "vi_VN",
+      "family": "vi",
+      "region": "VN",
+      "name_native": "Vietnamese",
+      "name_english": "Vietnamese"
+    },
+    "quality": "medium",
+    "num_speakers": 1,
+    "speaker_id_map": {},
+    "files": {
+      "ngochuyen.onnx": {
+        "size_bytes": 63516050,
+        "md5_digest": ""
+      },
+      "ngochuyen.onnx.json": {
+        "size_bytes": 4855,
+        "md5_digest": ""
+      }
+    },
+    "aliases": [],
+    "audio": {
+      "sample_rate": 22050
+    }
+  },
+  "thanhphuong2": {
+    "name": "thanhphuong2",
+    "language": {
+      "code": "vi_VN",
+      "family": "vi",
+      "region": "VN",
+      "name_native": "Vietnamese",
+      "name_english": "Vietnamese"
+    },
+    "quality": "medium",
+    "num_speakers": 1,
+    "speaker_id_map": {},
+    "files": {
+      "thanhphuong2.onnx": {
+        "size_bytes": 63516050,
+        "md5_digest": ""
+      },
+      "thanhphuong2.onnx.json": {
+        "size_bytes": 4855,
+        "md5_digest": ""
+      }
+    },
+    "aliases": [],
+    "audio": {
+      "sample_rate": 22050
+    }
+  },
+  "tranthanh3870": {
+    "name": "tranthanh3870",
+    "language": {
+      "code": "vi_VN",
+      "family": "vi",
+      "region": "VN",
+      "name_native": "Vietnamese",
+      "name_english": "Vietnamese"
+    },
+    "quality": "medium",
+    "num_speakers": 1,
+    "speaker_id_map": {},
+    "files": {
+      "tranthanh3870.onnx": {
+        "size_bytes": 63516050,
+        "md5_digest": ""
+      },
+      "tranthanh3870.onnx.json": {
+        "size_bytes": 4855,
+        "md5_digest": ""
+      }
+    },
+    "aliases": [],
+    "audio": {
+      "sample_rate": 22050
+    }
+  },
+  "vietthao3886": {
+    "name": "vietthao3886",
+    "language": {
+      "code": "vi_VN",
+      "family": "vi",
+      "region": "VN",
+      "name_native": "Vietnamese",
+      "name_english": "Vietnamese"
+    },
+    "quality": "medium",
+    "num_speakers": 1,
+    "speaker_id_map": {},
+    "files": {
+      "vietthao3886.onnx": {
+        "size_bytes": 63516050,
+        "md5_digest": ""
+      },
+      "vietthao3886.onnx.json": {
+        "size_bytes": 4855,
+        "md5_digest": ""
+      }
+    },
+    "aliases": [],
+    "audio": {
+      "sample_rate": 22050
+    }
+  }
+}
