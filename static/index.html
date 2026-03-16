@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Speech API — Vietnamese & English TTS</title>
+    <title>Speech API — Vietnamese TTS</title>
     <meta name="description" content="Multi-language Speech API — TTS & ASR powered by Piper ONNX + Whisper">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -220,7 +220,7 @@
     <div class="header">
         <div class="badge">⚡ Piper ONNX + Whisper ASR</div>
         <h1>Speech API</h1>
-        <p>TTS · ASR — Vietnamese & English</p>
+        <p>TTS · ASR — Vietnamese TTS</p>
     </div>
 
     <div class="tabs" id="tabBar">
@@ -233,9 +233,7 @@
     <div id="tab-tts" class="tab-content active">
         <!-- Language Sub-tabs -->
         <div class="lang-tabs">
-            <button class="lang-tab active" data-lang="vi" onclick="switchLang('vi')">🇻🇳 Tiếng Việt</button>
-            <button class="lang-tab" data-lang="en" onclick="switchLang('en')">🇺🇸 English</button>
-        </div>
+            <button class="lang-tab active" data-lang="vi" onclick="switchLang('vi')">🇻🇳 Tiếng Việt</button>        </div>
 
         <!-- Vietnamese Panel -->
         <div id="lang-vi" class="lang-panel active">
@@ -282,33 +280,6 @@
                 <div class="voice-gallery" id="voiceGallery-vi"></div>
             </div>
         </div>
-
-        <!-- English Panel -->
-        <div id="lang-en" class="lang-panel">
-            <div class="card">
-                <label>English Text</label>
-                <textarea id="text-en" placeholder="Enter English text for speech synthesis..." maxlength="5000">Hello! This is a text-to-speech system supporting English voices.</textarea>
-                <span class="char-count"><span id="charCount-en">0</span> / 5000</span>
-                <div class="controls">
-                    <div>
-                        <label>Voice</label>
-                        <select id="voice-en"><option>Loading...</option></select>
-                    </div>
-                    <div>
-                        <label>Speed</label>
-                        <div class="slider-wrap">
-                            <input type="range" id="speed-en" min="0.5" max="2.0" step="0.1" value="1.0">
-                            <span id="speedVal-en">1.0x</span>
-                        </div>
-                    </div>
-                    <div>
-                        <label>Pitch</label>
-                        <div class="slider-wrap">
-                            <input type="range" id="pitch-en" min="0.5" max="2.0" step="0.1" value="1.0">
-                            <span id="pitchVal-en">1.0x</span>
-                        </div>
-                    </div>
-                </div>
                 <button class="btn btn-primary" onclick="synthesize('en')">
                     <span>🔊</span> Generate Speech
                 </button>
@@ -316,16 +287,10 @@
                 <div class="result" id="result-en">
                     <audio id="player-en" controls></audio>
                     <div class="btn-row">
-                        <button class="btn btn-sm btn-primary" onclick="downloadAudio('en')" style="background:linear-gradient(135deg,#10b981,#059669)">📥 Download WAV</button>
+                        <button class="btn btn-sm btn-primary" onclick="downloadAudio('vi')" style="background:linear-gradient(135deg,#10b981,#059669)">📥 Download WAV</button>
                         <button class="btn btn-sm btn-copy" onclick="toggleHistory()">📜 History</button>
                     </div>
                 </div>
-            </div>
-            <div class="card" style="margin-top:16px">
-                <label>🎙️ English Voices</label>
-                <p style="color:var(--text-dim);font-size:0.82rem;margin-bottom:14px">Click ▶ to preview · Click card to select voice</p>
-                <audio id="samplePlayer-en" style="display:none"></audio>
-                <div class="voice-gallery" id="voiceGallery-en"></div>
             </div>
         </div>
 
@@ -349,9 +314,7 @@
             <div style="margin-bottom:14px">
                 <label>Ngôn ngữ</label>
                 <select id="asrLang">
-                    <option value="vi" selected>🇻🇳 Tiếng Việt</option>
-                    <option value="en">🇬🇧 English</option>
-                </select>
+                    <option value="vi" selected>🇻🇳 Tiếng Việt</option>                </select>
             </div>
 
             <div id="asr-mic" class="asr-panel active">
@@ -443,24 +406,21 @@
     let currentSampleVoice = null;
 
     const VOICES_META = {
-        lacphi:{g:'♀',n:'Lạc Phi',s:'Chững chạc, đĩnh đạc',cat:'vi-nữ',lang:'vi'},
         maiphuong:{g:'♀',n:'Mai Phương',s:'Trong trẻo, tươi sáng',cat:'vi-nữ',lang:'vi'},
-        ngochuyen:{g:'♀',n:'Ngọc Huyền',s:'Truyền cảm',cat:'vi-nữ',lang:'vi'},
-        thanhphuong2:{g:'♀',n:'Thanh Phương',s:'Nhẹ nhàng',cat:'vi-nữ',lang:'vi'},
+                thanhphuong2:{g:'♀',n:'Thanh Phương',s:'Nhẹ nhàng',cat:'vi-nữ',lang:'vi'},
         manhdung:{g:'♂',n:'Mạnh Dũng',s:'Rõ ràng, mạch lạc',cat:'vi-nam',lang:'vi'},
         minhkhang:{g:'♂',n:'Minh Khang',s:'Mạnh mẽ, tự tin',cat:'vi-nam',lang:'vi'},
         minhquang:{g:'♂',n:'Minh Quang',s:'Tự tin, chuyên nghiệp',cat:'vi-nam',lang:'vi'},
-        tranthanh3870:{g:'♂',n:'Trấn Thành',s:'Nghệ sĩ, hài hước',cat:'vi-nam',lang:'vi'},
-        john:{g:'♂',n:'John',s:'Clear, professional',cat:'en-male',lang:'en'},
-        mattheo:{g:'♂',n:'Mattheo',s:'Natural, expressive',cat:'en-male',lang:'en'},
-        mattheo1:{g:'♂',n:'Mattheo v2',s:'Warm, conversational',cat:'en-male',lang:'en'},
+        ngochuyen:{g:'♀',n:'Ngọc Huyền',s:'Truyền cảm · Piper',cat:'vi-nữ',lang:'vi'},
+        'vieneu-ngochuyen':{g:'♀',n:'Ngọc Huyền',s:'Nữ Bắc · AI thế hệ mới',cat:'vieneu',lang:'vi'},
+        'vieneu-vinh':{g:'♂',n:'Vĩnh',s:'Nam Trung · AI thế hệ mới',cat:'vieneu',lang:'vi'},
         'valtec-nf':{g:'♀',n:'Nữ Bắc',s:'North Female · Valtec',cat:'valtec',lang:'vi'},
         'valtec-sf':{g:'♀',n:'Nữ Nam',s:'South Female · Valtec',cat:'valtec',lang:'vi'},
         'valtec-sm':{g:'♂',n:'Nam Nam',s:'South Male · Valtec',cat:'valtec',lang:'vi'},
         'valtec-nm2':{g:'♂',n:'Nam Bắc 2',s:'North Male 2 · Valtec',cat:'valtec',lang:'vi'},
     };
-    const CAT_LABELS_VI = {'valtec':'🎙️ Valtec · Nhấn nhá theo vùng miền','vi-nữ':'🇻🇳 Giọng Nữ · Piper','vi-nam':'🇻🇳 Giọng Nam · Piper'};
-    const CAT_LABELS_EN = {'en-male':'🇺🇸 Male Voices'};
+    const CAT_LABELS_VI = {'vieneu':'🧠 VieNeu · AI thế hệ mới','valtec':'🎙️ Valtec · Nhấn nhá theo vùng miền','vi-nữ':'🇻🇳 Giọng Nữ · Piper','vi-nam':'🇻🇳 Giọng Nam · Piper'};
+    const CAT_LABELS_EN = {};
 
     // ── Init ──
     document.addEventListener('DOMContentLoaded', () => {
@@ -531,13 +491,13 @@
             const res = await fetch('/voices');
             const voices = await res.json();
             const viVoices = voices.filter(v => (v.language||'vi') !== 'en');
-            const enVoices = voices.filter(v => (v.language||'vi') === 'en');
+            // English removed
 
             buildVoiceUI(viVoices, 'vi', CAT_LABELS_VI);
-            buildVoiceUI(enVoices, 'en', CAT_LABELS_EN);
+            // English removed
         } catch(e) {
             document.getElementById('voice-vi').innerHTML = '<option value="lacphi">Lạc Phi</option>';
-            document.getElementById('voice-en').innerHTML = '<option value="john">John</option>';
+            // English removed
         }
     }
 
@@ -548,7 +508,7 @@
 
         const groups = {};
         voices.forEach(v => {
-            const meta = VOICES_META[v.id] || {g:'?',n:v.name,s:v.name,cat:lang==='en'?'en-male':'vi-nữ',lang};
+            const meta = VOICES_META[v.id] || {g:'?',n:v.name,s:v.name,cat:'vi-nữ',lang};
             const cat = meta.cat;
             if (!groups[cat]) groups[cat] = [];
             groups[cat].push({...v, meta});
@@ -658,7 +618,7 @@
         } catch(e) { showErr(e.message, lang); }
         finally {
             btn.disabled = false;
-            btn.innerHTML = '<span>🔊</span> ' + (lang==='vi' ? 'Tạo giọng nói' : 'Generate Speech');
+            btn.innerHTML = '<span>🔊</span> Tạo giọng nói';
         }
     }
 

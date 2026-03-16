@@ -16,6 +16,14 @@ from valtec_onnx_engine import ValtecOnnxVoice, is_valtec_model
 
 logger = logging.getLogger(__name__)
 
+# VieNeu voices (proxied to port 8001)
+VIENEU_VOICES = {
+    "vieneu-ngochuyen": {"name": "VieNeu Ngọc Huyền", "desc": "Nữ Bắc · AI mới"},
+    "vieneu-vinh": {"name": "VieNeu Vĩnh", "desc": "Nam Trung · AI mới"},
+}
+VIENEU_API = "http://127.0.0.1:8001"
+
+
 
 class TTSEngine:
     """Text-to-Speech engine using Piper-TTS for Vietnamese."""
@@ -107,6 +115,9 @@ class TTSEngine:
                 "language": config.get("espeak", {}).get("voice", "vi"),
                 "sample_rate": config.get("audio", {}).get("sample_rate", 22050),
             })
+        # VieNeu voices
+        for vid, info in VIENEU_VOICES.items():
+            voices.append({"id": vid, "name": info["name"], "language": "vi", "sample_rate": 24000})
         return voices
 
     def synthesize(
@@ -130,6 +141,11 @@ class TTSEngine:
         # Select voice
         if voice is None:
             voice = next(iter(self.models.keys()))
+
+        # Route VieNeu voices to microservice
+        if voice.startswith("vieneu-"):
+            return self._synthesize_vieneu(text, voice, speed)
+
         if voice not in self.models:
             raise ValueError(f"Voice not found: {voice}. Available: {list(self.models.keys())}")
 
@@ -166,6 +182,29 @@ class TTSEngine:
         except Exception as e:
             logger.error(f"TTS generation failed: {e}")
             raise RuntimeError(f"Failed to generate speech: {e}")
+
+
+    def _synthesize_vieneu(self, text: str, voice: str, speed: float = 1.0) -> tuple:
+        """Proxy to VieNeu microservice on port 8001."""
+        import urllib.request
+        import json as _json
+
+        url = f"{VIENEU_API}/synthesize"
+        data = _json.dumps({"text": text, "voice": voice, "speed": speed}).encode()
+        req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                wav_data = resp.read()
+        except Exception as e:
+            raise RuntimeError(f"VieNeu API error: {e}")
+
+        import wave
+        buf = io.BytesIO(wav_data)
+        with wave.open(buf, "rb") as wf:
+            sr = wf.getframerate()
+            frames = wf.readframes(wf.getnframes())
+            audio = np.frombuffer(frames, dtype=np.int16).astype(np.float32) / 32767.0
+        return audio, sr
 
     def audio_to_wav_bytes(self, audio: np.ndarray, sample_rate: int) -> bytes:
         """Convert audio array to WAV bytes."""

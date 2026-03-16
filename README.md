@@ -1,9 +1,9 @@
 # 🇻🇳 Phong Piper VNTTS
 
-> **Vietnamese & English Text-to-Speech + Speech-to-Text API**
-> [Piper ONNX](https://github.com/rhasspy/piper) · [Valtec ONNX](https://github.com/tronghieuit/valtec-tts) · [Sherpa-ONNX Whisper](https://github.com/k2-fsa/sherpa-onnx)
+> **Vietnamese Text-to-Speech + Speech-to-Text API**
+> [Piper ONNX](https://github.com/rhasspy/piper) · [Valtec ONNX](https://github.com/tronghieuit/valtec-tts) · [VieNeu-TTS](https://github.com/pnnbao97/VieNeu-TTS) · [Sherpa-ONNX Whisper](https://github.com/k2-fsa/sherpa-onnx)
 
-Self-hosted Speech API — 15 voices, OpenAI-compatible, Home Assistant ready.
+Self-hosted Speech API — 12 Vietnamese voices, 3 TTS engines, OpenAI-compatible, Home Assistant ready.
 
 ## 🚀 Quick Start
 
@@ -19,7 +19,22 @@ cp .env.example .env
 uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
-## 🎙️ Voices (15)
+## 🎙️ Voices (12 Vietnamese)
+
+### 🧠 VieNeu · AI thế hệ mới (2)
+
+Chạy như microservice riêng (port 8001), sử dụng GGUF Q4 quantized model từ [VieNeu-TTS](https://github.com/pnnbao97/VieNeu-TTS). Giọng nói tự nhiên, ngữ điệu phong phú hơn Piper.
+
+| Voice ID | Tên | Mô tả | Model | Sample Rate |
+|----------|-----|-------|-------|-------------|
+| `vieneu-ngochuyen` | Ngọc Huyền | ♀ Nữ Bắc · AI mới | LoRA fine-tuned GGUF Q4 | 24kHz |
+| `vieneu-vinh` | Vĩnh | ♂ Nam Trung · AI mới | Preset GGUF Q4 | 24kHz |
+
+**Đặc điểm VieNeu:**
+- 🧠 LLM backbone (Qwen2.5-0.5B GGUF) — hiểu ngữ cảnh, ngữ điệu tự nhiên
+- ⚡ Quantized Q4 — ~337MB RAM/model, chạy CPU
+- 🔊 Preload cả 2 models khi startup — không trễ request đầu
+- ⏱️ Inference ~10-15s/câu (CPU 4 cores)
 
 ### 🎙️ Valtec · Nhấn nhá theo vùng miền (4)
 
@@ -30,33 +45,23 @@ Exported từ [tronghieuit/valtec-tts](https://github.com/tronghieuit/valtec-tts
 | `valtec-nf` | ♀ Nữ Bắc | North Female | 24kHz |
 | `valtec-sf` | ♀ Nữ Nam | South Female | 24kHz |
 | `valtec-sm` | ♂ Nam Nam | South Male | 24kHz |
-| `valtec-nm2` | ♂ Nam Bắc | North Male | 24kHz |
+| `valtec-nm2` | ♂ Nam Bắc 2 | North Male 2 | 24kHz |
 
-### 🇻🇳 Piper · Giọng Nữ (5)
+### 🇻🇳 Piper · Giọng Nữ (3)
 
 | Voice ID | Tên | Mô tả | Sample Rate |
 |----------|-----|-------|-------------|
-| `lacphi` | Lạc Phi | Chững chạc, đĩnh đạc | 22.05kHz |
 | `maiphuong` | Mai Phương | Trong trẻo, tươi sáng | 22.05kHz |
 | `ngochuyen` | Ngọc Huyền | Truyền cảm | 22.05kHz |
 | `thanhphuong2` | Thanh Phương | Nhẹ nhàng | 22.05kHz |
 
-### 🇻🇳 Piper · Giọng Nam (4)
+### 🇻🇳 Piper · Giọng Nam (3)
 
 | Voice ID | Tên | Mô tả | Sample Rate |
 |----------|-----|-------|-------------|
 | `manhdung` | Mạnh Dũng | Rõ ràng, mạch lạc | 22.05kHz |
 | `minhkhang` | Minh Khang | Mạnh mẽ, tự tin | 22.05kHz |
 | `minhquang` | Minh Quang | Tự tin, chuyên nghiệp | 22.05kHz |
-| `tranthanh3870` | Trấn Thành | Nghệ sĩ, hài hước | 22.05kHz |
-
-### 🇺🇸 English (3)
-
-| Voice ID | Description |
-|----------|-------------|
-| `john` | Clear, professional |
-| `mattheo` | Natural, expressive |
-| `mattheo1` | Warm, conversational |
 
 ---
 
@@ -102,6 +107,16 @@ Text → Vietnamese Preprocessor → Phonemizer → Token IDs → ONNX Runtime �
 
 5. **Output**: `[1, 1, audio_samples]` float32 waveform (24kHz)
 
+### VieNeu-TTS voices
+
+```
+Text → LLM (Qwen2.5-0.5B GGUF Q4) → audio tokens → DAC decoder → WAV (24kHz)
+```
+
+1. **LLM Inference**: text + voice prompt → LLM generates audio token sequence (llama-cpp-python)
+2. **DAC Decoding**: audio tokens → waveform via Descript Audio Codec
+3. **Microservice Proxy**: main API routes `vieneu-*` voices → VieNeu service (port 8001)
+
 ---
 
 ## 🔧 ONNX Export Process
@@ -139,17 +154,17 @@ ONNX models không lưu trong git (quá lớn). Tải về từ Google Drive:
 
 | Type | Per model | Total |
 |------|-----------|-------|
+| VieNeu GGUF Q4 | ~337 MB | 674 MB (2 models) |
 | Valtec ONNX | ~168 MB | 672 MB (4 speakers) |
-| Piper ONNX | ~61 MB | 671 MB (11 models) |
+| Piper ONNX | ~61 MB | 366 MB (6 models) |
 
-### Benchmark (4 CPU, 6GB RAM)
+### Benchmark (4 CPU, 4.4GB RAM)
 
-| Engine | Câu demo ~80 ký tự | So sánh |
-|--------|---------------------|---------|
-| Valtec PyTorch | 24.3s | baseline |
-| Valtec PyTorch + `torch.compile` | 10.9s | 2.2x |
-| **Valtec ONNX** | **2.3s** | **10.5x** |
-| Piper ONNX | 1.6s | 15x |
+| Engine | Câu demo ~80 ký tự | So sánh | Chất lượng |
+|--------|---------------------|---------|------------|
+| **VieNeu GGUF Q4** | **~12s** | — | ⭐⭐⭐⭐⭐ tự nhiên nhất |
+| **Valtec ONNX** | **2.3s** | 5x nhanh hơn VieNeu | ⭐⭐⭐⭐ nhấn nhá vùng miền |
+| **Piper ONNX** | **1.6s** | 7.5x nhanh hơn VieNeu | ⭐⭐⭐ rõ ràng |
 
 ---
 
@@ -160,7 +175,7 @@ ONNX models không lưu trong git (quá lớn). Tải về từ Google Drive:
 | Param | Type | Range | Default | Mô tả |
 |-------|------|-------|---------|-------|
 | `text` / `input` | string | 1–5000 chars | — | Văn bản cần đọc |
-| `voice` | string | — | `lacphi` | Voice ID |
+| `voice` | string | — | `vieneu-ngochuyen` | Voice ID |
 | `speed` | float | 0.5–2.0 | 1.0 | Tốc độ đọc (2.0 = nhanh gấp đôi) |
 | `pitch` | float | 0.5–2.0 | 1.0 | Cao độ giọng (ffmpeg asetrate) |
 | `noise_scale` | float | 0.0–1.0 | — | Mức biến đổi ngẫu nhiên |
@@ -181,20 +196,20 @@ ONNX models không lưu trong git (quá lớn). Tải về từ Google Drive:
 ### Ví dụ
 
 ```bash
+# VieNeu voice (natural AI)
+curl -X POST http://localhost/tts \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Xin chào","voice":"vieneu-ngochuyen"}' \
+  -o speech.wav
+
 # Valtec voice, chậm lại, format mp3
-curl -X POST http://localhost:8000/v1/audio/speech \
+curl -X POST http://localhost/v1/audio/speech \
   -H "Content-Type: application/json" \
   -d '{"input":"Xin chào","voice":"valtec-sf","speed":0.8,"response_format":"mp3"}' \
   -o speech.mp3
 
-# Piper voice, giọng cao hơn
-curl -X POST http://localhost:8000/tts \
-  -H "Content-Type: application/json" \
-  -d '{"text":"Xin chào","voice":"lacphi","pitch":1.3}' \
-  -o speech.wav
-
 # Long text (auto-chunking tại dấu câu)
-curl -X POST http://localhost:8000/tts/long \
+curl -X POST http://localhost/tts/long \
   -H "Content-Type: application/json" \
   -d '{"text":"Đoạn văn rất dài...","voice":"minhkhang"}' \
   -o speech.wav
@@ -223,7 +238,7 @@ curl -X POST http://localhost:8000/tts/long \
 HOST=0.0.0.0
 PORT=8000
 MODELS_DIR=./models
-DEFAULT_VOICE=lacphi
+DEFAULT_VOICE=vieneu-ngochuyen
 ASR_MODEL_DIR=./asr-models
 ASR_MODEL=sherpa-onnx-whisper-medium
 OMP_NUM_THREADS=4          # match CPU count
@@ -233,8 +248,8 @@ OMP_NUM_THREADS=4          # match CPU count
 
 ```
 phong-piper-vntts/
-├── app.py                  # FastAPI application
-├── tts_engine.py           # Piper + Valtec voice routing
+├── app.py                  # FastAPI application (main API, port 80)
+├── tts_engine.py           # Piper + Valtec + VieNeu voice routing
 ├── valtec_onnx_engine.py   # Valtec ONNX inference engine
 ├── asr_engine.py           # Sherpa-ONNX Whisper ASR
 ├── vietnamese_processor.py # Vietnamese text preprocessing
@@ -245,9 +260,26 @@ phong-piper-vntts/
 │   ├── *.onnx              # Piper models (~61MB each)
 │   ├── *.onnx.json         # Model configs
 │   └── valtec-*.onnx       # Valtec models (~168MB each)
-├── tts.service             # systemd service
+├── tts.service             # systemd service (main API)
 ├── docker-compose.yml      # Docker deployment
 └── setup_lxc.sh            # LXC container setup
+
+/root/opt/vieneu-tts/       # VieNeu microservice (separate venv)
+├── vieneu_api.py           # FastAPI app (port 8001)
+├── venv/                   # Python venv with vieneu SDK
+└── vieneu.service          # systemd service
+```
+
+### Service Architecture
+
+```
+                  ┌─────────────────────────┐
+   Client ──────▶│  Main TTS API (port 80)  │
+                  │  Piper + Valtec engines  │
+                  │                         │
+                  │  vieneu-* voices ──────▶│──▶ VieNeu API (port 8001)
+                  │  proxy to :8001         │    GGUF Q4 inference
+                  └─────────────────────────┘
 ```
 
 ## 🏠 Home Assistant
@@ -260,7 +292,8 @@ Settings → Integrations → Wyoming → Host: your-ip, Port: 10200
 
 ## 🙏 Credits
 
-- **[NGHI-TTS](https://github.com/nghimestudio/nghitts)** — Vietnamese & English Piper voice models
+- **[VieNeu-TTS](https://github.com/pnnbao97/VieNeu-TTS)** — Vietnamese LLM-based TTS with GGUF support
+- **[NGHI-TTS](https://github.com/nghimestudio/nghitts)** — Vietnamese Piper voice models
 - **[Valtec-TTS](https://github.com/tronghieuit/valtec-tts)** — Vietnamese multi-speaker VITS model (ONNX exported)
 - **[Piper](https://github.com/rhasspy/piper)** — ONNX neural TTS engine
 - **[Sherpa-ONNX](https://github.com/k2-fsa/sherpa-onnx)** — Whisper ASR
