@@ -12,6 +12,7 @@ from typing import Optional, Dict, List, Any
 import numpy as np
 from piper import PiperVoice
 from piper.config import SynthesisConfig
+from valtec_onnx_engine import ValtecOnnxVoice, is_valtec_model
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,7 @@ class TTSEngine:
         self.models_dir = Path(models_dir)
         self.models: Dict[str, Dict[str, Any]] = {}
         self.voices: Dict[str, PiperVoice] = {}
+        self.valtec_voices = {}
         self._load_available_models()
         self._preload_all_models()
 
@@ -50,10 +52,24 @@ class TTSEngine:
             }
             logger.info(f"Found model: {model_name}")
 
+        # Load Valtec ONNX models separately
+        for name, info in list(self.models.items()):
+            if is_valtec_model(info["config"]):
+                try:
+                    sr = info["config"].get("sample_rate", 24000)
+                    self.valtec_voices[name] = ValtecOnnxVoice(
+                        info["path"], info["config"].get("speaker", name), sr
+                    )
+                    logger.info(f"Loaded Valtec ONNX model: {name}")
+                except Exception as e:
+                    logger.error(f"Failed to load Valtec model {name}: {e}")
+
 
     def _preload_all_models(self) -> None:
         """Pre-load all models into memory for instant inference."""
         for model_name in list(self.models.keys()):
+            if model_name in self.valtec_voices:
+                continue
             try:
                 self.get_voice(model_name)
             except Exception as e:
@@ -116,6 +132,11 @@ class TTSEngine:
             voice = next(iter(self.models.keys()))
         if voice not in self.models:
             raise ValueError(f"Voice not found: {voice}. Available: {list(self.models.keys())}")
+
+        # Route Valtec ONNX models
+        if voice in self.valtec_voices:
+            audio, sr = self.valtec_voices[voice].synthesize(text, speed=speed)
+            return audio, sr
 
         config = self.models[voice]["config"]
         sample_rate = config.get("audio", {}).get("sample_rate", 22050)

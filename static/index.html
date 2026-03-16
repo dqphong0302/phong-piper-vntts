@@ -445,19 +445,21 @@
     const VOICES_META = {
         lacphi:{g:'♀',n:'Lạc Phi',s:'Chững chạc, đĩnh đạc',cat:'vi-nữ',lang:'vi'},
         maiphuong:{g:'♀',n:'Mai Phương',s:'Trong trẻo, tươi sáng',cat:'vi-nữ',lang:'vi'},
-        mytam2:{g:'♀',n:'Mỹ Tâm',s:'Ca sĩ',cat:'vi-nữ',lang:'vi'},
         ngochuyen:{g:'♀',n:'Ngọc Huyền',s:'Truyền cảm',cat:'vi-nữ',lang:'vi'},
         thanhphuong2:{g:'♀',n:'Thanh Phương',s:'Nhẹ nhàng',cat:'vi-nữ',lang:'vi'},
         manhdung:{g:'♂',n:'Mạnh Dũng',s:'Rõ ràng, mạch lạc',cat:'vi-nam',lang:'vi'},
         minhkhang:{g:'♂',n:'Minh Khang',s:'Mạnh mẽ, tự tin',cat:'vi-nam',lang:'vi'},
         minhquang:{g:'♂',n:'Minh Quang',s:'Tự tin, chuyên nghiệp',cat:'vi-nam',lang:'vi'},
         tranthanh3870:{g:'♂',n:'Trấn Thành',s:'Nghệ sĩ, hài hước',cat:'vi-nam',lang:'vi'},
-        vietthao3886:{g:'♂',n:'Việt Thảo',s:'MC, truyền hình',cat:'vi-nam',lang:'vi'},
         john:{g:'♂',n:'John',s:'Clear, professional',cat:'en-male',lang:'en'},
         mattheo:{g:'♂',n:'Mattheo',s:'Natural, expressive',cat:'en-male',lang:'en'},
         mattheo1:{g:'♂',n:'Mattheo v2',s:'Warm, conversational',cat:'en-male',lang:'en'},
+        'valtec-nf':{g:'♀',n:'Nữ Bắc',s:'North Female · Valtec',cat:'valtec',lang:'vi'},
+        'valtec-sf':{g:'♀',n:'Nữ Nam',s:'South Female · Valtec',cat:'valtec',lang:'vi'},
+        'valtec-sm':{g:'♂',n:'Nam Nam',s:'South Male · Valtec',cat:'valtec',lang:'vi'},
+        'valtec-nm2':{g:'♂',n:'Nam Bắc 2',s:'North Male 2 · Valtec',cat:'valtec',lang:'vi'},
     };
-    const CAT_LABELS_VI = {'vi-nữ':'🇻🇳 Giọng Nữ','vi-nam':'🇻🇳 Giọng Nam'};
+    const CAT_LABELS_VI = {'valtec':'🎙️ Valtec · Nhấn nhá theo vùng miền','vi-nữ':'🇻🇳 Giọng Nữ · Piper','vi-nam':'🇻🇳 Giọng Nam · Piper'};
     const CAT_LABELS_EN = {'en-male':'🇺🇸 Male Voices'};
 
     // ── Init ──
@@ -600,12 +602,17 @@
         document.querySelectorAll('.vc-play').forEach(b => { b.classList.remove('active'); b.textContent = '▶'; });
         document.querySelectorAll('.voice-card').forEach(c => c.classList.remove('playing'));
 
-        player.src = '/static/samples/' + id + '.wav';
-        player.play().catch(() => {
-            // If no sample, generate one
+        const sampleUrl = '/static/samples/' + id + '.wav';
+        // Try loading static sample first
+        fetch(sampleUrl, {method:'HEAD'}).then(r => {
+            if (r.ok) { player.src = sampleUrl; return player.play(); }
+            else { throw new Error('no sample'); }
+        }).catch(() => {
+            // Fallback: generate via API
+            btn.textContent = '⏳';
             fetch('/tts', {
                 method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({text: lang==='vi' ? 'Xin chào, tôi là giọng đọc tiếng Việt.' : 'Hello, this is a demo of my voice.', voice: id})
+                body: JSON.stringify({text: lang==='vi' ? 'Hà Nội vào thu, gió heo may se lạnh thổi qua những con phố cũ, lá vàng rơi lác đác trên vỉa hè. Đây là mùa đẹp nhất trong năm, khi bầu trời trong xanh và hương hoa sữa thoang thoảng khắp phố phường.' : 'The morning sun cast golden light across the quiet meadow, where wildflowers swayed gently in the breeze.', voice: id})
             }).then(r => r.blob()).then(b => { player.src = URL.createObjectURL(b); player.play(); });
         });
         btn.classList.add('active'); btn.textContent = '⏸';

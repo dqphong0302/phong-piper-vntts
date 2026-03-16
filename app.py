@@ -23,7 +23,7 @@ HOST = os.environ.get("HOST", "0.0.0.0")
 PORT = int(os.environ.get("PORT", "8000"))
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "info")
 CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "*").split(",")
-DEFAULT_VOICE = os.environ.get("DEFAULT_VOICE", "lacphi")
+DEFAULT_VOICE = os.environ.get("DEFAULT_VOICE", "minhkhang")
 
 # Configure logging
 logging.basicConfig(
@@ -91,18 +91,23 @@ def apply_pitch(wav_bytes: bytes, pitch: float, sample_rate: int = 22050) -> byt
 
 
 def convert_format(wav_bytes: bytes, fmt: str) -> tuple[bytes, str]:
-    """Convert WAV to mp3/opus using ffmpeg. Returns (bytes, media_type)."""
+    """Convert WAV to mp3/m4a/ogg using ffmpeg. Returns (bytes, media_type)."""
     if fmt == "wav":
         return wav_bytes, "audio/wav"
 
+    # Format: (codec_args, extension, media_type, sample_rate)
     codec_map = {
-        "mp3": (["libmp3lame", "-b:a", "128k"], ".mp3", "audio/mpeg"),
-        "opus": (["libopus", "-b:a", "64k"], ".opus", "audio/opus"),
+        "mp3": (["libmp3lame", "-b:a", "128k"], ".mp3", "audio/mpeg", 44100),
+        "m4a": (["aac", "-b:a", "128k"], ".m4a", "audio/mp4", 44100),
+        "aac": (["aac", "-b:a", "64k"], ".aac", "audio/aac", 44100),
+        "opus": (["libopus", "-b:a", "64k"], ".ogg", "audio/ogg", 48000),
+        "ogg": (["libopus", "-b:a", "64k"], ".ogg", "audio/ogg", 48000),
+        "amr": (["libopencore_amrnb", "-b:a", "12.2k"], ".amr", "audio/amr", 8000),
     }
     if fmt not in codec_map:
         return wav_bytes, "audio/wav"
 
-    codec_args, ext, media = codec_map[fmt]
+    codec_args, ext, media, target_sr = codec_map[fmt]
 
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
         f.write(wav_bytes)
@@ -110,10 +115,13 @@ def convert_format(wav_bytes: bytes, fmt: str) -> tuple[bytes, str]:
     out_path = in_path.replace(".wav", ext)
 
     try:
-        subprocess.run(
-            ["ffmpeg", "-y", "-i", in_path, "-codec:a"] + codec_args + [out_path],
-            capture_output=True, check=True, timeout=30
-        )
+        cmd = ["ffmpeg", "-y", "-i", in_path, "-ar", str(target_sr), "-ac", "1", "-codec:a"] + codec_args
+        if fmt in ("ogg", "opus"):
+            cmd += ["-f", "ogg"]
+        if fmt == "aac":
+            cmd += ["-f", "adts"]
+        cmd += [out_path]
+        subprocess.run(cmd, capture_output=True, check=True, timeout=30)
         with open(out_path, "rb") as f:
             return f.read(), media
     finally:
@@ -227,8 +235,8 @@ class OpenAISpeechRequest(BaseModel):
     """OpenAI-compatible speech request."""
     model: str = Field(default="tts-1", description="TTS model (ignored, uses Piper)")
     input: str = Field(..., min_length=1, max_length=5000, description="Text to synthesize")
-    voice: str = Field(default="vietthao3886", description="Voice ID")
-    response_format: str = Field(default="mp3", description="Output format: mp3, wav, opus")
+    voice: str = Field(default="minhkhang", description="Voice ID")
+    response_format: str = Field(default="aac", description="Output format: aac, amr, mp3, m4a, wav, ogg")
     speed: float = Field(default=1.0, ge=0.5, le=2.0, description="Speech speed")
     pitch: float = Field(default=1.0, ge=0.5, le=2.0, description="Pitch shift")
 
